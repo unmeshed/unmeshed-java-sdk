@@ -44,6 +44,15 @@
         <unmeshed.version>${env.UNMESHED_VERSION}</unmeshed.version>
     </properties>
 
+    <dependencies>
+        <!-- Dependency on unmeshed-api-common -->
+        <dependency>
+            <groupId>io.unmeshed</groupId>
+            <artifactId>unmeshed-api-common</artifactId>
+            <version>1.9.9</version> <!-- must match published version -->
+        </dependency>
+    </dependencies>
+
     <build>
         <plugins>
 

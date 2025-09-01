@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.unmeshed</groupId>
+    <artifactId>unmeshed-sdk</artifactId>
+    <version>1.9.9</version>
+    <packaging>jar</packaging>
+
+    <name>unmeshed-sdk</name>
+    <description>Java SDK for Unmeshed Workflow Engine.</description>
+    <url>https://github.com/unmeshed/unmeshed-java-sdk</url>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>http://www.opensource.org/licenses/mit-license.php</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>unmeshed-devs</id>
+            <name>Unmeshed Devs</name>
+            <email>unmeshed-devs@unmeshed.com</email>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:https://github.com/unmeshed/unmeshed-java-sdk.git</connection>
+        <developerConnection>scm:git:ssh://github.com/unmeshed/unmeshed-java-sdk.git</developerConnection>
+        <url>https://github.com/unmeshed/unmeshed-java-sdk</url>
+    </scm>
+
+    <properties>
+        <java.version>22.0.1</java.version>
+        <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
+    </properties>
+
+    <build>
+        <plugins>
+
+            <!-- Fetch JAR from S3 and install as main artifact -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>download-s3-jar</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <mkdir dir="${project.build.directory}"/>
+                                <exec executable="aws">
+                                    <arg value="s3"/>
+                                    <arg value="cp"/>
+                                    <arg value="s3://unmeshed-sdk/maven-repo/io/unmeshed/unmeshed-sdk/${project.version}/unmeshed-sdk-${project.version}.jar"/>
+                                    <arg value="${project.build.directory}/${project.build.finalName}.jar"/>
+                                    <env key="AWS_ACCESS_KEY_ID" value="${env.AWS_ACCESS_KEY_ID}"/>
+                                    <env key="AWS_SECRET_ACCESS_KEY" value="${env.AWS_SECRET_ACCESS_KEY}"/>
+                                    <env key="AWS_REGION" value="${env.AWS_REGION}"/>
+                                </exec>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Install the downloaded JAR as main artifact -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-install-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>install-s3-jar</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>install-file</goal>
+                        </goals>
+                        <configuration>
+                            <file>${project.build.directory}/${project.build.finalName}.jar</file>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>${project.artifactId}</artifactId>
+                            <version>${project.version}</version>
+                            <packaging>jar</packaging>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- GPG Signing -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>${maven-gpg-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                        <configuration>
+                            <keyname>0x1F4E1756</keyname>
+                            <passphrase>Unmeshed@123</passphrase>
+                            <gpgArguments>
+                                <arg>--pinentry-mode</arg>
+                                <arg>loopback</arg>
+                            </gpgArguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Nexus Staging -->
+            <plugin>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <version>0.8.0</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <publishingServerId>ossrh</publishingServerId>
+                    <autoPublish>true</autoPublish>
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
+
+</project>

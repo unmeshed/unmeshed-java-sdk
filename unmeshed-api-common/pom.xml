@@ -37,17 +37,20 @@
     </scm>
 
     <properties>
-        <revision>1.9.9</revision>
+        <!-- Version of this Maven module -->
+        <revision>2.0.0</revision>
+        <!-- Java and encoding -->
         <java.version>22.0.1</java.version>
-        <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <unmeshed.version>${env.UNMESHED_VERSION}</unmeshed.version>
+        <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
+        <!-- External S3 JAR version, can remain older if needed -->
+        <unmeshed-api-common.version>1.9.9</unmeshed-api-common.version><!-- S3 precompiled JAR version -->
     </properties>
 
     <build>
         <plugins>
 
-            <!-- Maven Compiler Plugin: Use release 8 for Java 8, setting bootstrap class path -->
+            <!-- Compiler plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -57,7 +60,7 @@
                 </configuration>
             </plugin>
 
-            <!-- Combined all executions in a single maven-antrun-plugin block -->
+            <!-- AntRun plugin: create dummy source and fetch precompiled JAR -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-antrun-plugin</artifactId>
@@ -72,26 +75,25 @@
                         <configuration>
                             <target>
                                 <mkdir dir="${project.build.directory}/generated-sources/dummy/io/unmeshed"/>
-                                <echo file="${project.build.directory}/generated-sources/dummy/io/unmeshed/UnmeshedSDK.java">
+                                <echo file="${project.build.directory}/generated-sources/dummy/io/unmeshed/UnmeshedAPICommon.java">
                                     package io.unmeshed;
 
                                     /**
-                                    * Unmeshed SDK - Precompiled JAR from S3
-                                    * This is a placeholder class to satisfy Maven Central requirements.
-                                    * The actual SDK classes are contained in the precompiled JAR.
+                                    * Unmeshed API Common - Precompiled JAR from S3
+                                    * Placeholder class to satisfy Maven Central requirements.
+                                    * Actual classes are contained in the precompiled JAR.
                                     */
-                                    public class UnmeshedSDK {
+                                    public class UnmeshedAPICommon {
 
                                     /**
-                                    * SDK Version
+                                    * Library Version
                                     */
                                     public static final String VERSION = "${project.version}";
 
                                     /**
-                                    * Default constructor for UnmeshedSDK.
-                                    * This is a placeholder class - actual functionality is in the precompiled JAR.
+                                    * Default constructor
                                     */
-                                    public UnmeshedSDK() {
+                                    public UnmeshedAPICommon() {
                                     // Placeholder constructor
                                     }
                                     }
@@ -111,7 +113,7 @@
                                 <exec executable="aws">
                                     <arg value="s3"/>
                                     <arg value="cp"/>
-                                    <arg value="s3://unmeshed-sdk/maven-repo/io/unmeshed/unmeshed-api-common/${project.version}/unmeshed-api-common-${project.version}.jar"/>
+                                    <arg value="s3://unmeshed-sdk/maven-repo/io/unmeshed/unmeshed-api-common/${unmeshed-api-common.version}/unmeshed-api-common-${unmeshed-api-common.version}.jar"/>
                                     <arg value="${project.build.directory}/${project.build.finalName}.jar"/>
                                     <env key="AWS_ACCESS_KEY_ID" value="${env.AWS_ACCESS_KEY_ID}"/>
                                     <env key="AWS_SECRET_ACCESS_KEY" value="${env.AWS_SECRET_ACCESS_KEY}"/>
@@ -131,7 +133,7 @@
                                 <exec executable="aws">
                                     <arg value="s3"/>
                                     <arg value="cp"/>
-                                    <arg value="s3://unmeshed-sdk/maven-repo/io/unmeshed/unmeshed-api-common/${project.version}/unmeshed-api-common-${project.version}.jar"/>
+                                    <arg value="s3://unmeshed-sdk/maven-repo/io/unmeshed/unmeshed-api-common/${unmeshed-api-common.version}/unmeshed-api-common-${unmeshed-api-common.version}.jar"/>
                                     <arg value="${project.build.directory}/${project.build.finalName}.jar"/>
                                     <env key="AWS_ACCESS_KEY_ID" value="${env.AWS_ACCESS_KEY_ID}"/>
                                     <env key="AWS_SECRET_ACCESS_KEY" value="${env.AWS_SECRET_ACCESS_KEY}"/>

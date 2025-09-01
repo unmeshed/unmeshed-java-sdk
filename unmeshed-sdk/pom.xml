@@ -37,11 +37,15 @@
     </scm>
 
     <properties>
-        <revision>1.9.9</revision>
+        <revision>2.0.1</revision> <!-- Maven release version -->
         <java.version>22.0.1</java.version>
         <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <unmeshed.version>${env.UNMESHED_VERSION}</unmeshed.version>
+
+        <!-- Dynamic versions -->
+        <unmeshed-sdk.version>1.9.9</unmeshed-sdk.version> <!-- S3 precompiled JAR version -->
+        <unmeshed-api-common.version>1.9.9</unmeshed-api-common.version> <!-- Dependency version -->
     </properties>
 
     <dependencies>
@@ -49,14 +53,43 @@
         <dependency>
             <groupId>io.unmeshed</groupId>
             <artifactId>unmeshed-api-common</artifactId>
-            <version>1.9.9</version> <!-- must match published version -->
+            <version>${unmeshed-api-common.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.16</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.18.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+            <version>2.18.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.glassfish.jersey.core</groupId>
+            <artifactId>jersey-common</artifactId>
+            <version>3.1.8</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.classgraph</groupId>
+            <artifactId>classgraph</artifactId>
+            <version>4.8.177</version>
         </dependency>
     </dependencies>
 
     <build>
         <plugins>
-
-            <!-- Maven Compiler Plugin: Use release 8 for Java 8, setting bootstrap class path -->
+            <!-- Maven Compiler Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -66,12 +99,13 @@
                 </configuration>
             </plugin>
 
-            <!-- Combined all executions in a single maven-antrun-plugin block -->
+            <!-- Maven Antrun Plugin for dummy sources and S3 download -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-antrun-plugin</artifactId>
                 <version>3.1.0</version>
                 <executions>
+                    <!-- Create dummy source -->
                     <execution>
                         <id>create-dummy-sources</id>
                         <phase>generate-sources</phase>
@@ -108,6 +142,8 @@
                             </target>
                         </configuration>
                     </execution>
+
+                    <!-- Download S3 JAR -->
                     <execution>
                         <id>download-and-replace-jar</id>
                         <phase>prepare-package</phase>
@@ -120,7 +156,7 @@
                                 <exec executable="aws">
                                     <arg value="s3"/>
                                     <arg value="cp"/>
-                                    <arg value="s3://unmeshed-sdk/maven-repo/io/unmeshed/unmeshed-sdk/${project.version}/unmeshed-sdk-${project.version}.jar"/>
+                                    <arg value="s3://unmeshed-sdk/maven-repo/io/unmeshed/unmeshed-sdk/${unmeshed-sdk.version}/unmeshed-sdk-${unmeshed-sdk.version}.jar"/>
                                     <arg value="${project.build.directory}/${project.build.finalName}.jar"/>
                                     <env key="AWS_ACCESS_KEY_ID" value="${env.AWS_ACCESS_KEY_ID}"/>
                                     <env key="AWS_SECRET_ACCESS_KEY" value="${env.AWS_SECRET_ACCESS_KEY}"/>
@@ -129,6 +165,8 @@
                             </target>
                         </configuration>
                     </execution>
+
+                    <!-- Replace JAR again at package phase -->
                     <execution>
                         <id>replace-with-s3-jar</id>
                         <phase>package</phase>
@@ -140,7 +178,7 @@
                                 <exec executable="aws">
                                     <arg value="s3"/>
                                     <arg value="cp"/>
-                                    <arg value="s3://unmeshed-sdk/maven-repo/io/unmeshed/unmeshed-sdk/${project.version}/unmeshed-sdk-${project.version}.jar"/>
+                                    <arg value="s3://unmeshed-sdk/maven-repo/io/unmeshed/unmeshed-sdk/${unmeshed-sdk.version}/unmeshed-sdk-${unmeshed-sdk.version}.jar"/>
                                     <arg value="${project.build.directory}/${project.build.finalName}.jar"/>
                                     <env key="AWS_ACCESS_KEY_ID" value="${env.AWS_ACCESS_KEY_ID}"/>
                                     <env key="AWS_SECRET_ACCESS_KEY" value="${env.AWS_SECRET_ACCESS_KEY}"/>
@@ -152,7 +190,7 @@
                 </executions>
             </plugin>
 
-            <!-- Add generated sources to source path -->
+            <!-- Add generated sources -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
@@ -173,7 +211,7 @@
                 </executions>
             </plugin>
 
-            <!-- JAR plugin will run normally and create artifact -->
+            <!-- JAR Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -183,7 +221,7 @@
                 </configuration>
             </plugin>
 
-            <!-- Create sources JAR (required by Maven Central) -->
+            <!-- Sources JAR -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
@@ -198,7 +236,7 @@
                 </executions>
             </plugin>
 
-            <!-- Create Javadoc JAR (required by Maven Central) -->
+            <!-- Javadoc JAR -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
@@ -241,7 +279,7 @@
                 </executions>
             </plugin>
 
-            <!-- Nexus Staging / Central -->
+            <!-- Nexus Central Publishing -->
             <plugin>
                 <groupId>org.sonatype.central</groupId>
                 <artifactId>central-publishing-maven-plugin</artifactId>

@@ -38,7 +38,7 @@
 
     <properties>
         <!-- Version of this Maven module -->
-        <revision>2.0.0</revision>
+        <revision>2.0.2</revision>
         <!-- Java and encoding -->
         <java.version>22.0.1</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

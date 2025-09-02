@@ -268,9 +268,9 @@
                             <goal>sign</goal>
                         </goals>
                         <configuration>
-                            <keyname>${env.GPG_KEYNAME}</keyname>
-                            <passphrase>${env.GPG_PASSPHRASE}</passphrase>
+                            <useAgent>true</useAgent>
                             <gpgArguments>
+                                <arg>--batch</arg>
                                 <arg>--pinentry-mode</arg>
                                 <arg>loopback</arg>
                             </gpgArguments>

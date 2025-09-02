@@ -20,7 +20,9 @@ jobs:
       AWS_ACCESS_KEY_ID:     ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_REGION:            ${{ secrets.AWS_REGION }}
-      GPG_PASSPHRASE:        ${{ secrets.GPG_PASSPHRASE }}
+      MAVEN_USERNAME:        ${{ secrets.OSSRH_USERNAME }}
+      MAVEN_CENTRAL_TOKEN:   ${{ secrets.OSSRH_PASSWORD }}
+      MAVEN_GPG_PASSPHRASE:  ${{ secrets.GPG_PASSPHRASE }}
 
     steps:
       - name: Checkout repository
@@ -32,10 +34,10 @@ jobs:
           distribution: temurin
           java-version: '21'
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
-          gpg-passphrase:  ${{ secrets.GPG_PASSPHRASE }}
+          gpg-passphrase:  MAVEN_GPG_PASSPHRASE
           server-id: ossrh
-          server-username: ${{ secrets.OSSRH_USERNAME }}
-          server-password: ${{ secrets.OSSRH_PASSWORD }}
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_CENTRAL_TOKEN
 
       - name: Package Common
         run: mvn -f unmeshed-api-common/pom.xml clean package verify

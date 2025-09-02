@@ -37,10 +37,10 @@ jobs:
           server-password: ${{ secrets.OSSRH_PASSWORD }}
 
       - name: Package Common
-        run: mvn -f unmeshed-api-common/pom.xml clean package
+        run: mvn -f unmeshed-api-common/pom.xml clean package verify
 
       - name: Package SDK
-        run: mvn -f unmeshed-sdk/pom.xml clean package
+        run: mvn -f unmeshed-sdk/pom.xml clean package verify
 
       - name: List all files
         run: find .

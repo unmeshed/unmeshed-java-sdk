@@ -41,3 +41,7 @@ jobs:
 
       - name: Package SDK
         run: mvn -f unmeshed-sdk/pom.xml clean package
+
+      - name: List all files
+        run: find .
+

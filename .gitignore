@@ -1,3 +1,4 @@
 .idea
 /private.gpg.asc
 /public.gpg.asc
+/unmeshed-api-common/target/

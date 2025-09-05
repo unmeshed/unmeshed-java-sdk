@@ -38,17 +38,42 @@
 
     <properties>
         <!-- Version of this Maven module -->
-        <revision>2.0.2</revision>
+        <revision>2.0.4</revision>
         <!-- Java and encoding -->
         <java.version>22.0.1</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
         <!-- External S3 JAR version, can remain older if needed -->
-        <unmeshed-api-common.version>1.9.9</unmeshed-api-common.version><!-- S3 precompiled JAR version -->
+        <unmeshed-api-common.version>1.9.24</unmeshed-api-common.version><!-- S3 precompiled JAR version -->
     </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.38</version> <!-- use latest stable -->
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
 
     <build>
         <plugins>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.10.1</version>
+                <configuration>
+                    <release>16</release>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>1.18.38</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
 
             <!-- Compiler plugin -->
             <plugin>
@@ -56,53 +81,47 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.10.1</version>
                 <configuration>
-                    <release>8</release>
+                    <release>21</release>
                 </configuration>
             </plugin>
 
-            <!-- AntRun plugin: create dummy source and fetch precompiled JAR -->
+            <!-- AntRun plugin: download and unpack real sources JAR, download compiled JAR -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-antrun-plugin</artifactId>
                 <version>3.1.0</version>
                 <executions>
+
+                    <!-- Download and unpack -sources.jar from S3 into generated-sources -->
                     <execution>
-                        <id>create-dummy-sources</id>
+                        <id>download-and-unpack-sources</id>
                         <phase>generate-sources</phase>
                         <goals>
                             <goal>run</goal>
                         </goals>
                         <configuration>
                             <target>
-                                <mkdir dir="${project.build.directory}/generated-sources/dummy/io/unmeshed"/>
-                                <echo file="${project.build.directory}/generated-sources/dummy/io/unmeshed/UnmeshedAPICommon.java">
-                                    package io.unmeshed;
+                                <mkdir dir="${project.build.directory}/generated-sources/unmeshed"/>
+                                <exec executable="aws" failonerror="true">
+                                    <arg value="s3"/>
+                                    <arg value="cp"/>
+                                    <arg value="s3://unmeshed-sdk/maven-repo/io/unmeshed/unmeshed-api-common/${unmeshed-api-common.version}/unmeshed-api-common-${unmeshed-api-common.version}-sources.jar"/>
+                                    <arg value="${project.build.directory}/unmeshed-api-common-sources.jar"/>
+                                    <env key="AWS_ACCESS_KEY_ID" value="${env.AWS_ACCESS_KEY_ID}"/>
+                                    <env key="AWS_SECRET_ACCESS_KEY" value="${env.AWS_SECRET_ACCESS_KEY}"/>
+                                    <env key="AWS_REGION" value="${env.AWS_REGION}"/>
+                                </exec>
 
-                                    /**
-                                    * Unmeshed API Common - Precompiled JAR from S3
-                                    * Placeholder class to satisfy Maven Central requirements.
-                                    * Actual classes are contained in the precompiled JAR.
-                                    */
-                                    public class UnmeshedAPICommon {
-
-                                    /**
-                                    * Library Version
-                                    */
-                                    public static final String VERSION = "${project.version}";
-
-                                    /**
-                                    * Default constructor
-                                    */
-                                    public UnmeshedAPICommon() {
-                                    // Placeholder constructor
-                                    }
-                                    }
-                                </echo>
+                                <!-- unzip the sources into generated-sources -->
+                                <unzip src="${project.build.directory}/unmeshed-api-common-sources.jar"
+                                       dest="${project.build.directory}/generated-sources/unmeshed"/>
                             </target>
                         </configuration>
                     </execution>
+
+                    <!-- Download compiled JAR from S3 to replace built artifact before packaging -->
                     <execution>
-                        <id>download-and-replace-jar</id>
+                        <id>download-compiled-jar</id>
                         <phase>prepare-package</phase>
                         <goals>
                             <goal>run</goal>
@@ -142,24 +161,25 @@
                             </target>
                         </configuration>
                     </execution>
+
                 </executions>
             </plugin>
 
-            <!-- Add generated sources to source path -->
+            <!-- Add extracted sources to source path -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
                 <version>3.3.0</version>
                 <executions>
                     <execution>
-                        <id>add-source</id>
+                        <id>add-extracted-sources</id>
                         <phase>generate-sources</phase>
                         <goals>
                             <goal>add-source</goal>
                         </goals>
                         <configuration>
                             <sources>
-                                <source>${project.build.directory}/generated-sources/dummy</source>
+                                <source>${project.build.directory}/generated-sources/unmeshed</source>
                             </sources>
                         </configuration>
                     </execution>
@@ -176,7 +196,7 @@
                 </configuration>
             </plugin>
 
-            <!-- Create sources JAR (required by Maven Central) -->
+            <!-- Create sources JAR from extracted sources (required by Maven Central) -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
@@ -187,11 +207,17 @@
                         <goals>
                             <goal>jar-no-fork</goal>
                         </goals>
+                        <configuration>
+                            <!-- Ensure the plugin picks up the generated sources -->
+                            <includes>
+                                <include>**/*.java</include>
+                            </includes>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
 
-            <!-- Create Javadoc JAR (required by Maven Central) -->
+            <!-- Create Javadoc JAR from extracted sources (required by Maven Central) -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
@@ -203,8 +229,10 @@
                             <goal>jar</goal>
                         </goals>
                         <configuration>
-                            <release>8</release>
+                            <sourcepath>${project.build.directory}/generated-sources/unmeshed</sourcepath>
+                            <release>21</release>
                             <quiet>true</quiet>
+                            <doclint>none</doclint>
                         </configuration>
                     </execution>
                 </executions>

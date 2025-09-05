@@ -1,0 +1,45 @@
+name: Publish Unmeshed SDK
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Publish Unmeshed API Common"]
+    types:
+      - completed
+
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    env:
+      AWS_ACCESS_KEY_ID:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION:            ${{ secrets.AWS_REGION }}
+      MAVEN_USERNAME:        ${{ secrets.OSSRH_USERNAME }}
+      MAVEN_CENTRAL_TOKEN:   ${{ secrets.OSSRH_PASSWORD }}
+      MAVEN_GPG_PASSPHRASE:  ${{ secrets.GPG_PASSPHRASE }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java, GPG, and Maven server creds
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase:  MAVEN_GPG_PASSPHRASE
+          server-id: ossrh
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_CENTRAL_TOKEN
+
+      - name: Package SDK
+        run: mvn -f unmeshed-sdk/pom.xml clean package deploy
+
+      - name: List all files
+        run: find .

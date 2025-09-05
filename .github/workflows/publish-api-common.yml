@@ -1,4 +1,4 @@
-name: Create and Publish a Unmeshed SDK
+name: Publish Unmeshed API Common
 
 on:
   workflow_dispatch:
@@ -41,9 +41,6 @@ jobs:
 
       - name: Package Common
         run: mvn -f unmeshed-api-common/pom.xml clean package deploy
-
-      - name: Package SDK
-        run: mvn -f unmeshed-sdk/pom.xml clean package deploy
 
       - name: List all files
         run: find .

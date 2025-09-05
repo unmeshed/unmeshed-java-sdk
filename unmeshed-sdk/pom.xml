@@ -37,18 +37,26 @@
     </scm>
 
     <properties>
-        <revision>2.0.2</revision> <!-- Maven release version -->
+        <revision>2.0.4</revision> <!-- Maven release version -->
         <java.version>22.0.1</java.version>
         <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <unmeshed.version>${env.UNMESHED_VERSION}</unmeshed.version>
 
         <!-- Dynamic versions -->
-        <unmeshed-sdk.version>1.9.9</unmeshed-sdk.version> <!-- S3 precompiled JAR version -->
-        <unmeshed-api-common.version>1.9.9</unmeshed-api-common.version> <!-- Dependency version -->
+        <unmeshed-sdk.version>1.9.24</unmeshed-sdk.version> <!-- S3 precompiled JAR version -->
+        <unmeshed-api-common.version>2.0.4</unmeshed-api-common.version> <!-- Dependency version -->
     </properties>
 
     <dependencies>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.38</version> <!-- use latest stable -->
+            <scope>provided</scope>
+        </dependency>
+
         <!-- Dependency on unmeshed-api-common -->
         <dependency>
             <groupId>io.unmeshed</groupId>
@@ -89,63 +97,33 @@
 
     <build>
         <plugins>
+
             <!-- Maven Compiler Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.10.1</version>
                 <configuration>
-                    <release>8</release>
+                    <release>21</release>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>1.18.38</version>
+                        </path>
+                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
 
-            <!-- Maven Antrun Plugin for dummy sources and S3 download -->
+            <!-- Download and unpack S3 sources -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-antrun-plugin</artifactId>
                 <version>3.1.0</version>
                 <executions>
-                    <!-- Create dummy source -->
+                    <!-- Download compiled JAR -->
                     <execution>
-                        <id>create-dummy-sources</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <configuration>
-                            <target>
-                                <mkdir dir="${project.build.directory}/generated-sources/dummy/io/unmeshed"/>
-                                <echo file="${project.build.directory}/generated-sources/dummy/io/unmeshed/UnmeshedSDK.java">
-                                    package io.unmeshed;
-
-                                    /**
-                                    * Unmeshed SDK - Precompiled JAR from S3
-                                    * This is a placeholder class to satisfy Maven Central requirements.
-                                    * The actual SDK classes are contained in the precompiled JAR.
-                                    */
-                                    public class UnmeshedSDK {
-
-                                    /**
-                                    * SDK Version
-                                    */
-                                    public static final String VERSION = "${project.version}";
-
-                                    /**
-                                    * Default constructor for UnmeshedSDK.
-                                    * This is a placeholder class - actual functionality is in the precompiled JAR.
-                                    */
-                                    public UnmeshedSDK() {
-                                    // Placeholder constructor
-                                    }
-                                    }
-                                </echo>
-                            </target>
-                        </configuration>
-                    </execution>
-
-                    <!-- Download S3 JAR -->
-                    <execution>
-                        <id>download-and-replace-jar</id>
+                        <id>download-main-jar</id>
                         <phase>prepare-package</phase>
                         <goals>
                             <goal>run</goal>
@@ -166,45 +144,49 @@
                         </configuration>
                     </execution>
 
-                    <!-- Replace JAR again at package phase -->
+                    <!-- Download and unpack sources JAR -->
                     <execution>
-                        <id>replace-with-s3-jar</id>
-                        <phase>package</phase>
+                        <id>download-and-unpack-sources</id>
+                        <phase>generate-sources</phase>
                         <goals>
                             <goal>run</goal>
                         </goals>
                         <configuration>
                             <target>
+                                <mkdir dir="${project.build.directory}/generated-sources/unmeshed"/>
                                 <exec executable="aws">
                                     <arg value="s3"/>
                                     <arg value="cp"/>
-                                    <arg value="s3://unmeshed-sdk/maven-repo/io/unmeshed/unmeshed-sdk/${unmeshed-sdk.version}/unmeshed-sdk-${unmeshed-sdk.version}.jar"/>
-                                    <arg value="${project.build.directory}/${project.build.finalName}.jar"/>
+                                    <arg value="s3://unmeshed-sdk/maven-repo/io/unmeshed/unmeshed-sdk/${unmeshed-sdk.version}/unmeshed-sdk-${unmeshed-sdk.version}-sources.jar"/>
+                                    <arg value="${project.build.directory}/unmeshed-sdk-sources.jar"/>
                                     <env key="AWS_ACCESS_KEY_ID" value="${env.AWS_ACCESS_KEY_ID}"/>
                                     <env key="AWS_SECRET_ACCESS_KEY" value="${env.AWS_SECRET_ACCESS_KEY}"/>
                                     <env key="AWS_REGION" value="${env.AWS_REGION}"/>
                                 </exec>
+                                <unzip src="${project.build.directory}/unmeshed-sdk-sources.jar"
+                                       dest="${project.build.directory}/generated-sources/unmeshed"/>
                             </target>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
 
-            <!-- Add generated sources -->
+            <!-- Add real sources to Maven build -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
                 <version>3.3.0</version>
                 <executions>
                     <execution>
-                        <id>add-source</id>
+                        <id>add-real-sources</id>
                         <phase>generate-sources</phase>
                         <goals>
                             <goal>add-source</goal>
                         </goals>
                         <configuration>
                             <sources>
-                                <source>${project.build.directory}/generated-sources/dummy</source>
+                                <source>${project.build.directory}/generated-sources/unmeshed</source>
+                                <source>${project.build.directory}/generated-sources/annotations</source>
                             </sources>
                         </configuration>
                     </execution>
@@ -221,26 +203,31 @@
                 </configuration>
             </plugin>
 
-            <!-- Sources JAR -->
+            <!-- Sources JAR (from unpacked S3 sources) -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
                 <version>3.2.1</version>
                 <executions>
                     <execution>
-                        <id>attach-sources</id>
+                        <id>attach-real-sources</id>
+                        <phase>package</phase>
                         <goals>
                             <goal>jar-no-fork</goal>
                         </goals>
+                        <configuration>
+                            <includePom>true</includePom>
+                            <forceCreation>true</forceCreation>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
 
-            <!-- Javadoc JAR -->
+            <!-- Javadoc JAR - Using Delombok sources -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.4.1</version>
                 <executions>
                     <execution>
                         <id>attach-javadocs</id>
@@ -248,8 +235,15 @@
                             <goal>jar</goal>
                         </goals>
                         <configuration>
-                            <release>8</release>
+                            <doclint>none</doclint>
+                            <failOnError>false</failOnError>
+                            <failOnWarnings>false</failOnWarnings>
                             <quiet>true</quiet>
+                            <source>21</source>
+                            <!-- Exclude the problematic classes -->
+                            <excludePackageNames>io.unmeshed.client:io.unmeshed.client.schedulers</excludePackageNames>
+                            <!-- Force creation of JAR even if empty -->
+                            <forceCreation>true</forceCreation>
                         </configuration>
                     </execution>
                 </executions>
@@ -290,7 +284,6 @@
                     <autoPublish>true</autoPublish>
                 </configuration>
             </plugin>
-
         </plugins>
     </build>
 

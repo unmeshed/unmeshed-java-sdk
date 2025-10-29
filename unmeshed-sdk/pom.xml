@@ -44,7 +44,7 @@
         <unmeshed.version>${env.UNMESHED_VERSION}</unmeshed.version>
 
         <!-- Dynamic versions -->
-        <unmeshed-sdk.version>1.9.24</unmeshed-sdk.version> <!-- S3 precompiled JAR version -->
+        <unmeshed-sdk.version>1.9.45</unmeshed-sdk.version> <!-- S3 precompiled JAR version -->
         <unmeshed-api-common.version>2.0.4</unmeshed-api-common.version> <!-- Dependency version -->
     </properties>
 

@@ -44,7 +44,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
         <!-- External S3 JAR version, can remain older if needed -->
-        <unmeshed-api-common.version>1.9.24</unmeshed-api-common.version><!-- S3 precompiled JAR version -->
+        <unmeshed-api-common.version>1.9.45</unmeshed-api-common.version><!-- S3 precompiled JAR version -->
     </properties>
 
     <dependencies>

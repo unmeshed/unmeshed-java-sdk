@@ -38,13 +38,13 @@
 
     <properties>
         <!-- Version of this Maven module -->
-        <revision>2.0.5</revision>
+        <revision>2.0.6</revision>
         <!-- Java and encoding -->
         <java.version>22.0.1</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
         <!-- External S3 JAR version, can remain older if needed -->
-        <unmeshed-api-common.version>1.9.45</unmeshed-api-common.version><!-- S3 precompiled JAR version -->
+        <unmeshed-api-common.version>1.9.58</unmeshed-api-common.version><!-- S3 precompiled JAR version -->
     </properties>
 
     <dependencies>

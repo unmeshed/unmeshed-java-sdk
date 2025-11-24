@@ -37,15 +37,15 @@
     </scm>
 
     <properties>
-        <revision>2.0.5</revision> <!-- Maven release version -->
+        <revision>2.0.6</revision> <!-- Maven release version -->
         <java.version>22.0.1</java.version>
         <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <unmeshed.version>${env.UNMESHED_VERSION}</unmeshed.version>
 
         <!-- Dynamic versions -->
-        <unmeshed-sdk.version>1.9.45</unmeshed-sdk.version> <!-- S3 precompiled JAR version -->
-        <unmeshed-api-common.version>2.0.5</unmeshed-api-common.version> <!-- Dependency version -->
+        <unmeshed-sdk.version>1.9.58</unmeshed-sdk.version> <!-- S3 precompiled JAR version -->
+        <unmeshed-api-common.version>2.0.6</unmeshed-api-common.version> <!-- Dependency version -->
     </properties>
 
     <dependencies>

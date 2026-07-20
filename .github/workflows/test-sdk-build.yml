@@ -1,0 +1,36 @@
+name: Test Unmeshed SDK Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      AWS_ACCESS_KEY_ID:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION:            ${{ secrets.AWS_REGION }}
+      MAVEN_GPG_PASSPHRASE:  ${{ secrets.GPG_PASSPHRASE }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Java and GPG
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+
+      - name: Build API Common without publishing
+        run: mvn -f unmeshed-api-common/pom.xml clean install
+
+      - name: Build SDK without publishing
+        run: mvn -f unmeshed-sdk/pom.xml clean verify
+
+      - name: List generated artifacts
+        run: find unmeshed-api-common/target unmeshed-sdk/target -maxdepth 1 -type f -print

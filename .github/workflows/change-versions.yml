@@ -1,0 +1,78 @@
+name: Prepare Unmeshed SDK Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      unmeshed_release_version:
+        description: Unmeshed release version to pull from S3
+        required: true
+        type: string
+
+jobs:
+  prepare-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Compute SDK release version
+        id: versions
+        shell: bash
+        env:
+          UNMESHED_RELEASE_VERSION: ${{ inputs.unmeshed_release_version }}
+        run: |
+          set -euo pipefail
+
+          if [[ ! "$UNMESHED_RELEASE_VERSION" =~ ^[0-9]+(\.[0-9]+)+$ ]]; then
+            echo "unmeshed.release.version must be numeric dotted version, got: $UNMESHED_RELEASE_VERSION" >&2
+            exit 1
+          fi
+
+          case "$UNMESHED_RELEASE_VERSION" in
+            1.*)
+              SDK_RELEASE_VERSION="2.1.${UNMESHED_RELEASE_VERSION#1.}"
+              ;;
+            2.*)
+              SDK_RELEASE_VERSION="2.2.${UNMESHED_RELEASE_VERSION#2.}"
+              ;;
+            3.*)
+              SDK_RELEASE_VERSION="$UNMESHED_RELEASE_VERSION"
+              ;;
+            *)
+              echo "Unsupported unmeshed.release.version: $UNMESHED_RELEASE_VERSION" >&2
+              echo "Supported major versions are 1.x, 2.x, and 3.x." >&2
+              exit 1
+              ;;
+          esac
+
+          echo "unmeshed_release_version=$UNMESHED_RELEASE_VERSION" >> "$GITHUB_OUTPUT"
+          echo "sdk_release_version=$SDK_RELEASE_VERSION" >> "$GITHUB_OUTPUT"
+          echo "Unmeshed release version: $UNMESHED_RELEASE_VERSION"
+          echo "SDK Maven release version: $SDK_RELEASE_VERSION"
+
+      - name: Update POM versions
+        shell: bash
+        env:
+          UNMESHED_RELEASE_VERSION: ${{ steps.versions.outputs.unmeshed_release_version }}
+          SDK_RELEASE_VERSION: ${{ steps.versions.outputs.sdk_release_version }}
+        run: |
+          set -euo pipefail
+
+          perl -0pi -e "s|<revision>[^<]+</revision>|<revision>$ENV{SDK_RELEASE_VERSION}</revision>|" \
+            unmeshed-api-common/pom.xml \
+            unmeshed-sdk/pom.xml
+
+          perl -0pi -e "s|<unmeshed-api-common.version>[^<]+</unmeshed-api-common.version>|<unmeshed-api-common.version>$ENV{UNMESHED_RELEASE_VERSION}</unmeshed-api-common.version>|" \
+            unmeshed-api-common/pom.xml
+
+          perl -0pi -e "s|<unmeshed-sdk.version>[^<]+</unmeshed-sdk.version>|<unmeshed-sdk.version>$ENV{UNMESHED_RELEASE_VERSION}</unmeshed-sdk.version>|" \
+            unmeshed-sdk/pom.xml
+
+          perl -0pi -e "s|<unmeshed-api-common.version>[^<]+</unmeshed-api-common.version>|<unmeshed-api-common.version>$ENV{SDK_RELEASE_VERSION}</unmeshed-api-common.version>|" \
+            unmeshed-sdk/pom.xml
+
+      - name: Show prepared changes
+        run: git diff -- unmeshed-api-common/pom.xml unmeshed-sdk/pom.xml

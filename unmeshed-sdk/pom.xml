@@ -251,6 +251,22 @@
                             </target>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>escape-javadoc-generics</id>
+                        <phase>process-sources</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <replace dir="${project.build.directory}/generated-sources/delombok"
+                                         token="Map&lt;String, Object&gt;"
+                                         value="Map&amp;lt;String, Object&amp;gt;">
+                                    <include name="**/*.java"/>
+                                </replace>
+                            </target>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
 
@@ -352,7 +368,7 @@
                             <quiet>true</quiet>
                             <source>21</source>
                             <sourcepath>${project.build.directory}/generated-sources/delombok</sourcepath>
-                            <forceCreation>true</forceCreation>
+                            <detectOfflineLinks>false</detectOfflineLinks>
                         </configuration>
                     </execution>
                 </executions>

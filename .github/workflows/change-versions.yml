@@ -61,17 +61,17 @@ jobs:
         run: |
           set -euo pipefail
 
-          perl -0pi -e "s|<revision>[^<]+</revision>|<revision>$ENV{SDK_RELEASE_VERSION}</revision>|" \
+          perl -0pi -e 's|<revision>[^<]+</revision>|<revision>$ENV{SDK_RELEASE_VERSION}</revision>|' \
             unmeshed-api-common/pom.xml \
             unmeshed-sdk/pom.xml
 
-          perl -0pi -e "s|<unmeshed-api-common.version>[^<]+</unmeshed-api-common.version>|<unmeshed-api-common.version>$ENV{UNMESHED_RELEASE_VERSION}</unmeshed-api-common.version>|" \
+          perl -0pi -e 's|<unmeshed-api-common.version>[^<]+</unmeshed-api-common.version>|<unmeshed-api-common.version>$ENV{UNMESHED_RELEASE_VERSION}</unmeshed-api-common.version>|' \
             unmeshed-api-common/pom.xml
 
-          perl -0pi -e "s|<unmeshed-sdk.version>[^<]+</unmeshed-sdk.version>|<unmeshed-sdk.version>$ENV{UNMESHED_RELEASE_VERSION}</unmeshed-sdk.version>|" \
+          perl -0pi -e 's|<unmeshed-sdk.version>[^<]+</unmeshed-sdk.version>|<unmeshed-sdk.version>$ENV{UNMESHED_RELEASE_VERSION}</unmeshed-sdk.version>|' \
             unmeshed-sdk/pom.xml
 
-          perl -0pi -e "s|<unmeshed-api-common.version>[^<]+</unmeshed-api-common.version>|<unmeshed-api-common.version>$ENV{SDK_RELEASE_VERSION}</unmeshed-api-common.version>|" \
+          perl -0pi -e 's|<unmeshed-api-common.version>[^<]+</unmeshed-api-common.version>|<unmeshed-api-common.version>$ENV{SDK_RELEASE_VERSION}</unmeshed-api-common.version>|' \
             unmeshed-sdk/pom.xml
 
       - name: Show prepared changes

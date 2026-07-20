@@ -12,11 +12,11 @@ jobs:
   prepare-release:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Compute SDK release version
         id: versions
@@ -76,3 +76,22 @@ jobs:
 
       - name: Show prepared changes
         run: git diff -- unmeshed-api-common/pom.xml unmeshed-sdk/pom.xml
+
+      - name: Commit prepared changes
+        shell: bash
+        env:
+          UNMESHED_RELEASE_VERSION: ${{ steps.versions.outputs.unmeshed_release_version }}
+        run: |
+          set -euo pipefail
+
+          if git diff --quiet -- unmeshed-api-common/pom.xml unmeshed-sdk/pom.xml; then
+            echo "No POM version changes to commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add unmeshed-api-common/pom.xml unmeshed-sdk/pom.xml
+          git commit -m "Update POM versions for Unmeshed ${UNMESHED_RELEASE_VERSION}"
+          git push origin HEAD:main

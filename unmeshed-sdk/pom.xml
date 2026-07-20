@@ -46,6 +46,7 @@
         <junit-bom.version>5.10.0</junit-bom.version>
         <jackson.version>3.0.2</jackson.version>
         <slf4j.version>2.0.16</slf4j.version>
+        <lombok.version>1.18.46</lombok.version>
 
         <!-- Dynamic versions -->
         <unmeshed-sdk.version>1.14.14</unmeshed-sdk.version> <!-- S3 precompiled JAR version -->
@@ -91,7 +92,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.38</version> <!-- use latest stable -->
+            <version>${lombok.version}</version>
             <scope>provided</scope>
         </dependency>
 
@@ -191,7 +192,7 @@
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
-                            <version>1.18.38</version>
+                            <version>${lombok.version}</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
@@ -275,6 +276,34 @@
                 </executions>
             </plugin>
 
+            <!-- Delombok unpacked S3 sources before Javadoc generation. -->
+            <plugin>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok-maven-plugin</artifactId>
+                <version>1.18.20.0</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.projectlombok</groupId>
+                        <artifactId>lombok</artifactId>
+                        <version>${lombok.version}</version>
+                    </dependency>
+                </dependencies>
+                <executions>
+                    <execution>
+                        <id>delombok-s3-sources</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>delombok</goal>
+                        </goals>
+                        <configuration>
+                            <sourceDirectory>${project.build.directory}/generated-sources/unmeshed</sourceDirectory>
+                            <outputDirectory>${project.build.directory}/generated-sources/delombok</outputDirectory>
+                            <addOutputDirectory>false</addOutputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
             <!-- JAR Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -322,9 +351,7 @@
                             <failOnWarnings>false</failOnWarnings>
                             <quiet>true</quiet>
                             <source>21</source>
-                            <!-- Exclude the problematic classes -->
-                            <excludePackageNames>io.unmeshed.client:io.unmeshed.client.schedulers</excludePackageNames>
-                            <!-- Force creation of JAR even if empty -->
+                            <sourcepath>${project.build.directory}/generated-sources/delombok</sourcepath>
                             <forceCreation>true</forceCreation>
                         </configuration>
                     </execution>

@@ -16,15 +16,18 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Java and GPG
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '21'
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
-          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+          gpg-passphrase-env-var: MAVEN_GPG_PASSPHRASE
+
+      - name: Verify GPG signing key
+        run: gpg --batch --list-secret-keys --with-colons | grep -q '^sec:'
 
       - name: Build API Common without publishing
         run: mvn -f unmeshed-api-common/pom.xml clean install

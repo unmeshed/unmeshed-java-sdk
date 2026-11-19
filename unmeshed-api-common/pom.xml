@@ -244,12 +244,8 @@
                             <goal>sign</goal>
                         </goals>
                         <configuration>
-                            <useAgent>true</useAgent>
-                            <gpgArguments>
-                                <arg>--batch</arg>
-                                <arg>--pinentry-mode</arg>
-                                <arg>loopback</arg>
-                            </gpgArguments>
+                            <signer>bc</signer>
+                            <bestPractices>true</bestPractices>
                         </configuration>
                     </execution>
                 </executions>

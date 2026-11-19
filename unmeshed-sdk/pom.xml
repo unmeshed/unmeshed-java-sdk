@@ -39,7 +39,7 @@
     <properties>
         <revision>2.1.17.11</revision> <!-- Maven release version -->
         <java.version>22.0.1</java.version>
-        <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
+        <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <unmeshed.version>${env.UNMESHED_VERSION}</unmeshed.version>
         <spring-boot-bom.version>4.0.2</spring-boot-bom.version>

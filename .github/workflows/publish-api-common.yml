@@ -26,21 +26,24 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Java, GPG, and Maven server creds
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '21'
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
-          gpg-passphrase:  MAVEN_GPG_PASSPHRASE
+          gpg-passphrase-env-var: MAVEN_GPG_PASSPHRASE
           server-id: ossrh
-          server-username: MAVEN_USERNAME
-          server-password: MAVEN_CENTRAL_TOKEN
+          server-username-env-var: MAVEN_USERNAME
+          server-password-env-var: MAVEN_CENTRAL_TOKEN
+
+      - name: Verify GPG signing key
+        run: gpg --batch --list-secret-keys --with-colons | grep -q '^sec:'
 
       - name: Package Common
-        run: mvn -f unmeshed-api-common/pom.xml clean package deploy
+        run: mvn --batch-mode -f unmeshed-api-common/pom.xml clean deploy
 
       - name: List all files
         run: find .
